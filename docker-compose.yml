@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:latest
+    volumes:
+      - /db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wp_user
+      MYSQL_PASSWORD: wp_password
+
+  wordpress:
+    build:
+      context: ./wordpress
+    depends_on:
+      - db
+    volumes:
+      - /wordpress_files:/var/www/html
+      - ./wp-config.php:/var/www/wp-config.php:ro
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wp_user
+      WORDPRESS_DB_PASSWORD: wp_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DEBUG: "true"
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_DEBUG', true );
+        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_DEBUG_DISPLAY', false );
+        define( 'SCRIPT_DEBUG', true );
+        define( 'DISALLOW_FILE_EDIT', true );
+        define( 'DISALLOW_FILE_MODS', true );
+        define( 'WP_DISABLE_FATAL_ERROR_HANDLER', true );
+        define( 'WP_DISABLE_ADMIN_EMAIL_VERIFY_SCREEN', true );
+        define( 'FORCE_SSL_ADMIN', true );
+        define( 'AUTOMATIC_UPDATER_DISABLED', true );
+
+  apache:
+    build:
+      context: ./apache
+    depends_on:
+      - wordpress
+    ports:
+      - "80:80"
+
+volumes:
+  db_data:
+  wordpress_files:
